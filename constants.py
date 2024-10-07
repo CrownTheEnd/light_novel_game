@@ -10,6 +10,7 @@ base_y = SCREEN_HEIGHT // 1.4  # Start positioning from the middle of the screen
 
 main_menu_image = pygame.image.load("Images/main_menu_img.jpg")
 main_menu_image = pygame.transform.scale(main_menu_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
-cursor = pygame.image.load("Images/cursor.png")
 menu_item_background = pygame.image.load("Images/menu_item_background.png")
 splash_card = pygame.image.load("Images/splash_card.png")
+
+main_menu_options = ['New Game', 'Load Game', 'Options', 'Exit']

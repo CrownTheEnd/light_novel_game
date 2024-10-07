@@ -38,29 +38,16 @@ def play_music(song, loop=-1):
     pygame.mixer.music.set_volume(0.5)
     pygame.mixer.music.play(loop)
 
-def render_main_menu(screen):
-    text_new = main_menu_font.render('New Game', True, (255, 255, 255))
-    text_load = main_menu_font.render('Load Game', True, (255, 255, 255))
-    text_options = main_menu_font.render('Options', True, (255, 255, 255))
-    text_exit = main_menu_font.render('Exit', True, (255, 255, 255))
+def render_main_menu(screen, selected_index):
+    normal_color = (255, 255, 255)  # Color for normal options
+    selected_color = (255, 215, 0)  # Color for the selected option
 
-    # Positioning each item based on the fixed spacing
-    splash_card_rect = splash_card.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 11))
-    text_new_rect = text_new.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 1.5))
-    text_load_rect = text_load.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 0.5))
-    text_options_rect = text_options.get_rect(center=(SCREEN_WIDTH // 2, base_y + vertical_spacing * 0.5))
-    text_exit_rect = text_exit.get_rect(center=(SCREEN_WIDTH // 2, base_y + vertical_spacing * 1.5))
-
-    # Draw the text on the screen
-    screen.blit(splash_card, splash_card_rect)
-    screen.blit(text_new, text_new_rect)
-    screen.blit(text_load, text_load_rect)
-    screen.blit(text_options, text_options_rect)
-    screen.blit(text_exit, text_exit_rect)
-    
-def render_menu_cursor(screen):
-    cursor_position = cursor.get_rect(center=(SCREEN_WIDTH // 2.35, base_y - vertical_spacing * 1.5))
-    screen.blit(cursor, cursor_position)
+    # Loop through menu options to render them
+    for i, option in enumerate(main_menu_options):
+        color = selected_color if i == selected_index else normal_color
+        text = main_menu_font.render(option, True, color)
+        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 1.5 + i * vertical_spacing))
+        screen.blit(text, text_rect)  # Render the text on the screen
     
 def render_menu_item_background(screen):
     position_new = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 1.5))
@@ -72,3 +59,21 @@ def render_menu_item_background(screen):
     screen.blit(menu_item_background, position_load)
     screen.blit(menu_item_background, position_options)
     screen.blit(menu_item_background, position_exit)
+    
+def menu_logic(options, screen):
+    current_index = 0  # Start with the first option
+    keys = pygame.key.get_pressed()
+
+    if keys[pygame.K_DOWN]:
+        current_index += 1  # Move down
+        if current_index >= len(options):  # Wrap around
+            current_index = 0
+
+    if keys[pygame.K_UP]:
+        current_index -= 1  # Move up
+        if current_index < 0:  # Wrap around
+            current_index = len(options) - 1
+
+    current_item = options[current_index]  # Get the current menu item
+    
+    
