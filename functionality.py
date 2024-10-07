@@ -76,4 +76,8 @@ def menu_logic(options, screen):
 
     current_item = options[current_index]  # Get the current menu item
     
+def reset_menu_index():
+    global selected_index
+    selected_index = 0  # Starting index for the menu
+    
     
