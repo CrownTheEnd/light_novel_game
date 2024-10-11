@@ -1,0 +1,7 @@
+current_bgm = #the song that was playing
+current_background = #the background you were on
+current_dialogue =  #the dialogue number you were on
+current_character = #the character you were talking to when you saved
+multi_character_check = [] #something like kafka[22], silverwolf[1]
+
+#may need to incorporate a way for dialogue to prompt follow up dialogue from another character or an end of scene

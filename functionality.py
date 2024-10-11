@@ -1,4 +1,5 @@
 import pygame
+import time
 from constants import *
 
 def display_typing_text(screen, text, font, typing_speed=100):
@@ -80,6 +81,41 @@ def reset_menu_index():
     global selected_index
     selected_index = 0  # Starting index for the menu
     
+def fade_out_music(duration):
+    pygame.mixer.music.fadeout(duration)
+    
+def fade_in_music(duration):
+    """Fade in music over the specified duration (in seconds)."""
+    pygame.mixer.music.set_volume(0)  # Start with volume at 0
+    
+    # Gradually increase volume
+    for i in range(0, 101, 1):  # Increase volume from 0 to 100
+        pygame.mixer.music.set_volume(i / 100)  # Set volume (0.0 to 1.0)
+        time.sleep(duration / 100)  # Adjust sleep to control fade speed
+    
+def fade_in(screen, duration, background_image):
+    """Fade the screen in over the given duration (in seconds)."""
+    for alpha in range(255, -1, -5):  # Decrease alpha from 255 to 0
+        fade_surface.set_alpha(alpha)  # Set the transparency level
+        
+        screen.blit(background_image, (0, 0))   # Fill the screen with white (or any background)
+        screen.blit(fade_surface, (0, 0))  # Blit the fade surface
+        
+        pygame.display.update()
+        time.sleep(duration / 51)  # Sleep to control fade speed
+
+def fade_out(screen, duration, background_image):
+    """Fade the screen out over the given duration (in seconds) using the provided background image."""
+    for alpha in range(0, 256, 5):  # Increase alpha from 0 to 255
+        fade_surface.set_alpha(alpha)
+        
+        # Draw the background image
+        screen.blit(background_image, (0, 0))  # Use your menu background image here
+        screen.blit(fade_surface, (0, 0))  # Overlay the fade surface
+        
+        pygame.display.update()
+        time.sleep(duration / 51)
+    
 def start_new_game(): #starts the game
     pass
 
@@ -95,10 +131,13 @@ def show_options(screen, selected_index, running):  # Pass `running` as an argum
                 options_running = False  # Exit the options menu as well
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
+                    menu_navigation_sound.play()
                     selected_index = (selected_index - 1) % len(option_menu_options)
                 elif event.key == pygame.K_DOWN:
+                    menu_navigation_sound.play()
                     selected_index = (selected_index + 1) % len(option_menu_options)
                 elif event.key == pygame.K_ESCAPE:
+                    menu_back_sound.play()
                     options_running = False
                 elif event.key == pygame.K_RETURN:
                     if selected_index == 0:  # BGM Volume
@@ -144,6 +183,9 @@ def show_load(screen, selected_index, running):  # Pass `running` as an argument
     load_running = True  # Local flag to keep the load menu running
     selected_index = 0  # Reset to the first slot when entering the load menu
 
+    # Define the options including three load slots and the "Return" option
+    option_menu_options = ["Load Game 1", "Load Game 2", "Load Game 3", "Return"]
+
     while load_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -151,19 +193,26 @@ def show_load(screen, selected_index, running):  # Pass `running` as an argument
                 load_running = False  # Exit the load menu as well
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
+                    menu_navigation_sound.play()
                     selected_index = (selected_index - 1) % len(option_menu_options)
                 elif event.key == pygame.K_DOWN:
+                    menu_navigation_sound.play()
                     selected_index = (selected_index + 1) % len(option_menu_options)
                 elif event.key == pygame.K_ESCAPE:
+                    menu_back_sound.play()
                     load_running = False  # Exit the load menu
                 elif event.key == pygame.K_RETURN:
-                    if selected_index == 0:  # Assuming index 0 is for loading the first game
-                        # Handle loading the selected game slot
+                    if selected_index == 0:  # Load Game 1
+                        # Handle loading the first game slot
                         pass
-                    elif selected_index == 1:  # Handle for loading the second game slot
-                        # Handle loading the selected game slot
+                    elif selected_index == 1:  # Load Game 2
+                        # Handle loading the second game slot
                         pass
-                    elif selected_index == 2:  # Return to main menu
+                    elif selected_index == 2:  # Load Game 3
+                        # Handle loading the third game slot
+                        pass
+                    elif selected_index == 3:  # Return to main menu
+                        menu_back_sound.play()
                         load_running = False  # Exit the load menu
 
         # Draw the options screen
@@ -179,18 +228,24 @@ def show_load(screen, selected_index, running):  # Pass `running` as an argument
     return running  # Return the updated `running` state
         
 def render_load_menu(screen, selected_index):
-    slot_width = 900.5
-    slot_height = 200.5
+    """Render the outline for the selected slot and the return button."""
+    slot_width = 900
+    slot_height = 200
     outline_color = (255, 255, 255)  # White outline color
     vertical_spacing = 20  # Space between each slot
     number_of_slots = 3  # Number of load slots
+    normal_color = (255, 255, 255)  # Color for normal options
+    selected_color = (255, 215, 0)  # Color for the selected option
 
     # Calculate the total height occupied by all slots
     total_height = (slot_height * number_of_slots) + (vertical_spacing * (number_of_slots - 1))
-
-    # Center the slots vertically and horizontally
     start_y_position = (SCREEN_HEIGHT - total_height) // 2  # Center vertically
     start_x_position = (SCREEN_WIDTH - slot_width) // 2  # Center horizontally
+
+    # Draw item backgrounds for each slot first
+    for i in range(number_of_slots):
+        position = load_item_background.get_rect(center=(SCREEN_WIDTH // 2, start_y_position + i * (slot_height + vertical_spacing) + slot_height / 2))
+        screen.blit(load_item_background, position)  # Draw the load item background
 
     # Draw the outline for the selected slot only
     if 0 <= selected_index < number_of_slots:
@@ -200,7 +255,22 @@ def render_load_menu(screen, selected_index):
         outline_rect = pygame.Rect(start_x_position, pos_y, slot_width, slot_height)
         pygame.draw.rect(screen, outline_color, outline_rect, 1)  # Draw the outline (1 pixel wide)
 
-def render_load_item_background(screen):    
+    # Draw the "Return" button background
+    return_y_position = start_y_position + total_height + vertical_spacing  # Position for the Return button
+    return_background_rect = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, return_y_position + 100))  # Center vertically
+    screen.blit(menu_item_background, return_background_rect)  # Draw the background for the Return option
+
+    # Draw the "Return" button text
+    font = pygame.font.Font(None, 50)  # Use default font
+    return_color = selected_color if selected_index == number_of_slots else normal_color
+    return_text_surface = font.render("Return", True, return_color)  # Render the text
+    return_text_rect = return_text_surface.get_rect(center=(SCREEN_WIDTH // 2, return_y_position + 100))  # Center the text horizontally
+    screen.blit(return_text_surface, return_text_rect)  # Draw the text
+
+
+
+
+def render_load_item_background(screen): #the background is a 900x200 black square that goes below the outline in render_load_menu   
     vertical_spacing = 20  # Space between each slot
     slot_height = 200.5  # Height of the load item background
     number_of_slots = 3  # Number of load slots
@@ -213,3 +283,40 @@ def render_load_item_background(screen):
         # Adjust the position to center the load item background in the slot
         position = load_item_background.get_rect(center=(SCREEN_WIDTH // 2, start_y_position + i * (slot_height + vertical_spacing) + slot_height / 2))
         screen.blit(load_item_background, position)  # Draw the load item background
+        
+def render_new_game(screen, selected_index, running):
+    game_running = True
+    fade_in(screen, 2, main_menu_image)
+    play_music("audio/music/menu_theme.wav", loop=-1)
+    fade_in_music(2)
+    
+    while game_running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False  # Set `running` to False to exit the game entirely
+                game_running = False  # Exit the options menu as well
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    menu_navigation_sound.play()
+                    selected_index = (selected_index - 1) % len(option_menu_options)
+                elif event.key == pygame.K_DOWN:
+                    menu_navigation_sound.play()
+                    selected_index = (selected_index + 1) % len(option_menu_options)
+                elif event.key == pygame.K_ESCAPE:
+                    menu_back_sound.play()
+                    options_running = False
+                elif event.key == pygame.K_RETURN:
+                    if selected_index == 0:  # BGM Volume
+                        pass
+                    elif selected_index == 1:  # SFX Volume
+                        pass
+                    elif selected_index == 2:  # Return to main menu
+                        options_running = False  # Exit the options menu
+        
+        screen.fill("black")
+        screen.blit(main_menu_image, (0, 0))
+        
+        pygame.display.flip()
+        
+    return running
+        
