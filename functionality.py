@@ -124,11 +124,16 @@ def load_game(): #loads the game
 
 def show_options(screen, selected_index, running):  # Pass `running` as an argument
     options_running = True  # Local flag to keep the options menu running
+
+    # Initialize slider values and create slider instances
+    slider_values = [50.0, 50.0]  # Initial values for BGM and SFX
+    sliders = [Slider(pos=(SCREEN_WIDTH // 2, 0), size=(100, 30), initial_val=slider_values[i], min=0, max=100) for i in range(2)]
+
     while options_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False  # Set `running` to False to exit the game entirely
-                options_running = False  # Exit the options menu as well
+                options_running = False  # Exit the options menu
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     menu_navigation_sound.play()
@@ -148,30 +153,47 @@ def show_options(screen, selected_index, running):  # Pass `running` as an argum
                         pass
                     elif selected_index == 2:  # Return to main menu
                         options_running = False  # Exit the options menu
+                
+                # Update slider values based on the selected index
+                if selected_index < len(sliders):  # Ensure we're in slider range
+                    if event.key == pygame.K_LEFT:
+                        sliders[selected_index].move_slider(-1)  # Move left
+                    elif event.key == pygame.K_RIGHT:
+                        sliders[selected_index].move_slider(1)  # Move right
+
+                    # Update the slider value in the slider_values list
+                    slider_values[selected_index] = (sliders[selected_index].button_rect.centerx - sliders[selected_index].left) / sliders[selected_index].size[0] * sliders[selected_index].max
 
         # Draw the options screen
         screen.fill("black")  # Clear the screen
         screen.blit(options_menu_image, (0, 0))  # Draw the background
 
         render_options_item_background(screen)  # Draw item backgrounds
-        render_options_menu(screen, selected_index)  # Pass selected_index to render the menu
+        render_options_menu(screen, selected_index, slider_values)  # Pass selected_index and slider_values to render the menu
 
-        pygame.display.flip()  # Update the display
-        pygame.time.delay(100)  # Small delay to avoid overwhelming the loop
+        # Render the sliders
+        for slider in sliders:
+            slider.render(screen)  # Render each slider
 
-    return running  # Return the updated `running` state
+        pygame.display.flip()  # Update the di
 
-def render_options_menu(screen, selected_index):
+def render_options_menu(screen, selected_index, slider_values):
     normal_color = (255, 255, 255)  # Color for normal options
-    selected_color = (255, 215, 0)  # Color for the selected option
+    selected_color = (255, 215, 0)   # Color for the selected option
 
-    # Loop through menu options to render them
+    # Calculate the vertical position for each option
     for i, option in enumerate(option_menu_options):
         color = selected_color if i == selected_index else normal_color
         text = main_menu_font.render(option, True, color)
         text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, base_y - option_spacing * 1.5 + i * option_spacing))
         screen.blit(text, text_rect)  # Render the text on the screen
-    
+
+        # Only create sliders for the first two options (BGM and SFX)
+        if i < 2:  # Assuming the first two options are for BGM and SFX
+            slider_y_position = text_rect.bottom + 40  # 5 pixels below the bottom of the text
+            slider = Slider(pos=(SCREEN_WIDTH // 2, slider_y_position), size=(100, 30), initial_val=slider_values[i], min=0, max=100)
+            slider.render(screen)
+
 def render_options_item_background(screen):
     positions = [-1.5, -0.5, 0.5]  # Relative positions for BGM, SFX, and Return
 
@@ -319,4 +341,5 @@ def render_new_game(screen, selected_index, running):
         pygame.display.flip()
         
     return running
-        
+
+    
