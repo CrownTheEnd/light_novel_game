@@ -21,31 +21,30 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    menu_navigation_sound.play()
+                    sounds['navigate'].play()
                     selected_index = (selected_index - 1) % len(main_menu_options)
                 elif event.key == pygame.K_DOWN:
-                    menu_navigation_sound.play()
+                    sounds['navigate'].play()
                     selected_index = (selected_index + 1) % len(main_menu_options)
                 elif event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_RETURN:
                     # Menu navigation
                     if selected_index == 0:  # New Game
-                        menu_confirm_sound.play()
+                        sounds['confirm'].play()
                         fade_out_music(2000) #this uses milliseconds for some reason?
                         fade_out(screen, 2, main_menu_image)
                         time.sleep(2)
                         running = render_new_game(screen, selected_index, running)  # Call your function to start a new game
                     elif selected_index == 1:  # Load Game
                         selected_index = 0 
-                        menu_confirm_sound.play()
+                        sounds['confirm'].play()
                         running = show_load(screen, selected_index, running)  # Call your function to load a game
                     elif selected_index == 2:  # Options
                         selected_index = 0  # Reset index before showing options
-                        menu_confirm_sound.play()
+                        sounds['confirm'].play()
                         running = show_options(screen, selected_index, running)  # Pass and update `running`
                     elif selected_index == 3:  # Exit
                         running = False  # Exit the game

@@ -15,9 +15,23 @@ mouse_press = pygame.mouse.get_pressed()
 
 slider_values = [50.0, 50.0]
 
-menu_navigation_sound = pygame.mixer.Sound("audio/sound_effects/menu_navigate.wav")
+bgm_volume = slider_values[0] / 100
+sfx_volume = slider_values[1] / 100
+
+"""menu_navigation_sound = pygame.mixer.Sound("audio/sound_effects/menu_navigate.wav")
 menu_confirm_sound = pygame.mixer.Sound("audio/sound_effects/menu_back.wav")
-menu_back_sound = pygame.mixer.Sound("audio/sound_effects/menu_back.wav")
+menu_back_sound = pygame.mixer.Sound("audio/sound_effects/menu_back.wav")"""
+sounds = {
+    'navigate': pygame.mixer.Sound("audio/sound_effects/menu_navigate.wav"),
+    'confirm': pygame.mixer.Sound("audio/sound_effects/menu_back.wav"),
+    'back': pygame.mixer.Sound("audio/sound_effects/menu_back.wav")
+}
+for sound in sounds.values():
+    sound.set_volume(sfx_volume)
+
+#sounds['jump'].play()
+
+
 
 base_y = SCREEN_HEIGHT // 1.4  # Start positioning from the middle of the screen || this is for menu item spacing
 
@@ -52,7 +66,7 @@ class Slider:
         # Calculate the initial position of the button based on the initial value
         self.initial_val = (self.right - self.left) * (initial_val / max)  # Adjust to the range of the slider
         
-        self.container_rect = pygame.Rect(self.left, self.top, self.size[0], self.size[1])
+        self.container_rect = pygame.Rect(self.left, (self.top + 15), self.size[0], 2)
         self.button_rect = pygame.Rect(self.left + self.initial_val - 5, self.top, 10, self.size[1])  # Adjust button width to 10
 
     def move_slider(self, change):
@@ -66,7 +80,7 @@ class Slider:
     def render(self, screen):
         # Draw the slider container and button
         pygame.draw.rect(screen, "darkgray", self.container_rect)
-        pygame.draw.rect(screen, "blue", self.button_rect)
+        pygame.draw.rect(screen, "white", self.button_rect)
 
         
 

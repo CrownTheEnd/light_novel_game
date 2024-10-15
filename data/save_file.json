@@ -4,4 +4,7 @@ current_dialogue =  #the dialogue number you were on
 current_character = #the character you were talking to when you saved
 multi_character_check = [] #something like kafka[22], silverwolf[1]
 
+bgm_volume =
+sfx_volume =
+
 #may need to incorporate a way for dialogue to prompt follow up dialogue from another character or an end of scene

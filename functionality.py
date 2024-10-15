@@ -36,7 +36,7 @@ def wait_for_input(key):
 
 def play_music(song, loop=-1):
     pygame.mixer.music.load(song)
-    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.set_volume(slider_values[0])
     pygame.mixer.music.play(loop)
 
 def render_main_menu(screen, selected_index):
@@ -124,10 +124,7 @@ def load_game(): #loads the game
 
 def show_options(screen, selected_index, running):  # Pass `running` as an argument
     options_running = True  # Local flag to keep the options menu running
-
-    # Initialize slider values and create slider instances
-    slider_values = [50.0, 50.0]  # Initial values for BGM and SFX
-    sliders = [Slider(pos=(SCREEN_WIDTH // 2, 0), size=(100, 30), initial_val=slider_values[i], min=0, max=100) for i in range(2)]
+    sliders = [Slider(pos=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), size=(100, 30), initial_val=slider_values[i], min=0, max=100) for i in range(2)]
 
     while options_running:
         for event in pygame.event.get():
@@ -136,13 +133,13 @@ def show_options(screen, selected_index, running):  # Pass `running` as an argum
                 options_running = False  # Exit the options menu
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    menu_navigation_sound.play()
+                    sounds['navigate'].play()
                     selected_index = (selected_index - 1) % len(option_menu_options)
                 elif event.key == pygame.K_DOWN:
-                    menu_navigation_sound.play()
+                    sounds['navigate'].play()
                     selected_index = (selected_index + 1) % len(option_menu_options)
                 elif event.key == pygame.K_ESCAPE:
-                    menu_back_sound.play()
+                    sounds['back'].play()
                     options_running = False
                 elif event.key == pygame.K_RETURN:
                     if selected_index == 0:  # BGM Volume
@@ -154,52 +151,70 @@ def show_options(screen, selected_index, running):  # Pass `running` as an argum
                     elif selected_index == 2:  # Return to main menu
                         options_running = False  # Exit the options menu
                 
-                # Update slider values based on the selected index
-                if selected_index < len(sliders):  # Ensure we're in slider range
-                    if event.key == pygame.K_LEFT:
-                        sliders[selected_index].move_slider(-1)  # Move left
-                    elif event.key == pygame.K_RIGHT:
-                        sliders[selected_index].move_slider(1)  # Move right
+        # Update slider values based on the selected index
+        if selected_index < len(sliders):  # Ensure we're in slider range
+            if pygame.key.get_pressed()[pygame.K_LEFT]:
+                sliders[selected_index].move_slider(-0.5)  # Move left
+                sounds['navigate'].play()
+                time.sleep(0.1)
+            if pygame.key.get_pressed()[pygame.K_RIGHT]:
+                sliders[selected_index].move_slider(0.5)  # Move right
+                sounds['navigate'].play()
+                time.sleep(0.1)
 
-                    # Update the slider value in the slider_values list
-                    slider_values[selected_index] = (sliders[selected_index].button_rect.centerx - sliders[selected_index].left) / sliders[selected_index].size[0] * sliders[selected_index].max
+            # Update the slider value in the slider_values list
+            slider_values[selected_index] = (sliders[selected_index].button_rect.centerx - sliders[selected_index].left) / sliders[selected_index].size[0] * sliders[selected_index].max
+            pygame.mixer.music.set_volume(slider_values[0]/100)
+            sfx_volume = slider_values[1] / 100
+            for sound in sounds.values():
+                sound.set_volume(sfx_volume)
+                
 
         # Draw the options screen
         screen.fill("black")  # Clear the screen
         screen.blit(options_menu_image, (0, 0))  # Draw the background
 
-        render_options_item_background(screen)  # Draw item backgrounds
+        #render_options_item_background(screen)  # Draw item backgrounds
         render_options_menu(screen, selected_index, slider_values)  # Pass selected_index and slider_values to render the menu
 
-        # Render the sliders
-        for slider in sliders:
-            slider.render(screen)  # Render each slider
-
         pygame.display.flip()  # Update the di
+        
+    return running
 
 def render_options_menu(screen, selected_index, slider_values):
     normal_color = (255, 255, 255)  # Color for normal options
-    selected_color = (255, 215, 0)   # Color for the selected option
+    selected_color = (255, 215, 0)  # Color for the selected option
 
     # Calculate the vertical position for each option
     for i, option in enumerate(option_menu_options):
         color = selected_color if i == selected_index else normal_color
         text = main_menu_font.render(option, True, color)
         text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, base_y - option_spacing * 1.5 + i * option_spacing))
-        screen.blit(text, text_rect)  # Render the text on the screen
+        
+        # Render menu item background
+        menu_item_bg_rect = menu_item_background.get_rect(center=text_rect.center)
+        screen.blit(menu_item_background, menu_item_bg_rect)
 
+        screen.blit(text, text_rect)  # Render the text on the screen
+        
         # Only create sliders for the first two options (BGM and SFX)
         if i < 2:  # Assuming the first two options are for BGM and SFX
-            slider_y_position = text_rect.bottom + 40  # 5 pixels below the bottom of the text
+            slider_y_position = text_rect.bottom + 40  # 40 pixels below the text
             slider = Slider(pos=(SCREEN_WIDTH // 2, slider_y_position), size=(100, 30), initial_val=slider_values[i], min=0, max=100)
+            
+            # Render background for slider
+            slider_bg_rect = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, slider_y_position))
+            screen.blit(menu_item_background, slider_bg_rect)
+
+            # Render slider on top of background
             slider.render(screen)
 
-def render_options_item_background(screen):
+"""def render_options_item_background(screen):
     positions = [-1.5, -0.5, 0.5]  # Relative positions for BGM, SFX, and Return
-
     for i, pos in enumerate(positions):
         position = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y + option_spacing * pos))
-        screen.blit(menu_item_background, position)
+        screen.blit(menu_item_background, position)"""
+
 
 def show_load(screen, selected_index, running):  # Pass `running` as an argument
     load_running = True  # Local flag to keep the load menu running
@@ -215,13 +230,13 @@ def show_load(screen, selected_index, running):  # Pass `running` as an argument
                 load_running = False  # Exit the load menu as well
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    menu_navigation_sound.play()
+                    sounds['navigate'].play()
                     selected_index = (selected_index - 1) % len(option_menu_options)
                 elif event.key == pygame.K_DOWN:
-                    menu_navigation_sound.play()
+                    sounds['navigate'].play()
                     selected_index = (selected_index + 1) % len(option_menu_options)
                 elif event.key == pygame.K_ESCAPE:
-                    menu_back_sound.play()
+                    sounds['back'].play()
                     load_running = False  # Exit the load menu
                 elif event.key == pygame.K_RETURN:
                     if selected_index == 0:  # Load Game 1
@@ -234,7 +249,7 @@ def show_load(screen, selected_index, running):  # Pass `running` as an argument
                         # Handle loading the third game slot
                         pass
                     elif selected_index == 3:  # Return to main menu
-                        menu_back_sound.play()
+                        sounds['back'].play()
                         load_running = False  # Exit the load menu
 
         # Draw the options screen
@@ -289,9 +304,6 @@ def render_load_menu(screen, selected_index):
     return_text_rect = return_text_surface.get_rect(center=(SCREEN_WIDTH // 2, return_y_position + 100))  # Center the text horizontally
     screen.blit(return_text_surface, return_text_rect)  # Draw the text
 
-
-
-
 def render_load_item_background(screen): #the background is a 900x200 black square that goes below the outline in render_load_menu   
     vertical_spacing = 20  # Space between each slot
     slot_height = 200.5  # Height of the load item background
@@ -319,13 +331,13 @@ def render_new_game(screen, selected_index, running):
                 game_running = False  # Exit the options menu as well
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    menu_navigation_sound.play()
+                    sounds['navigate'].play()
                     selected_index = (selected_index - 1) % len(option_menu_options)
                 elif event.key == pygame.K_DOWN:
-                    menu_navigation_sound.play()
+                    sounds['navigate'].play()
                     selected_index = (selected_index + 1) % len(option_menu_options)
                 elif event.key == pygame.K_ESCAPE:
-                    menu_back_sound.play()
+                    sounds['back'].play()
                     options_running = False
                 elif event.key == pygame.K_RETURN:
                     if selected_index == 0:  # BGM Volume
