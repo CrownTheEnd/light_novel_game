@@ -16,17 +16,13 @@ def display_typing_text(screen, text, font, typing_speed=100):
             index += 1
             last_time = current_time  # Reset the timer
 
-        # Clear the screen
-        screen.fill((0, 0, 0))
-
         # Render and display the text
         text_surface = font.render(displayed_text, True, (255, 255, 255))
-        screen.blit(text_surface, (50, 300))
-
+        screen.blit(text_surface, (150, 800))  # Adjust the position as needed
         pygame.display.flip()
         pygame.time.delay(30)  # Add a small delay to control the loop speed
 
-    return True  # Indicate that the text display is complete
+    return displayed_text, True  # Return the final text and indicate completion
 
 def wait_for_input(key):
     for event in pygame.event.get():
@@ -46,15 +42,15 @@ def render_main_menu(screen, selected_index):
     # Loop through menu options to render them
     for i, option in enumerate(main_menu_options):
         color = selected_color if i == selected_index else normal_color
-        text = main_menu_font.render(option, True, color)
+        text = textbox_font.render(option, True, color)
         text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 1.5 + i * vertical_spacing))
         screen.blit(text, text_rect)  # Render the text on the screen
     
 def render_menu_item_background(screen):
-    position_new = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 1.5))
-    position_load = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 0.5))
-    position_options = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y + vertical_spacing * 0.5))
-    position_exit = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y + vertical_spacing * 1.5))
+    position_new = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 1.5 + 2))
+    position_load = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y - vertical_spacing * 0.5 + 2))
+    position_options = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y + vertical_spacing * 0.5 + 2))
+    position_exit = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, base_y + vertical_spacing * 1.5 + 2))
     
     screen.blit(menu_item_background, position_new)
     screen.blit(menu_item_background, position_load)
@@ -103,6 +99,18 @@ def fade_in(screen, duration, background_image):
         
         pygame.display.update()
         time.sleep(duration / 51)  # Sleep to control fade speed
+        
+def fade_in_png(screen, duration, png_image, position): #Fade in a PNG image over the given duration without altering the background.
+    # Create a surface from the PNG to fade in
+    fade_surface = png_image.copy()
+    # Fade in the PNG from fully transparent (alpha=0) to fully opaque (alpha=255)
+    for alpha in range(0, 256, 5):
+        fade_surface.set_alpha(alpha)  # Adjust the alpha level
+        
+        screen.blit(fade_surface, position)     # Blit the fading PNG at the desired position
+        
+        pygame.display.update()
+        time.sleep(duration / 51)  # Control the speed of fading
 
 def fade_out(screen, duration, background_image):
     """Fade the screen out over the given duration (in seconds) using the provided background image."""
@@ -188,11 +196,12 @@ def render_options_menu(screen, selected_index, slider_values):
     # Calculate the vertical position for each option
     for i, option in enumerate(option_menu_options):
         color = selected_color if i == selected_index else normal_color
-        text = main_menu_font.render(option, True, color)
+        text = textbox_font.render(option, True, color)
         text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, base_y - option_spacing * 1.5 + i * option_spacing))
         
         # Render menu item background
         menu_item_bg_rect = menu_item_background.get_rect(center=text_rect.center)
+        menu_item_bg_rect.y += 2
         screen.blit(menu_item_background, menu_item_bg_rect)
 
         screen.blit(text, text_rect)  # Render the text on the screen
@@ -295,12 +304,13 @@ def render_load_menu(screen, selected_index):
     # Draw the "Return" button background
     return_y_position = start_y_position + total_height + vertical_spacing  # Position for the Return button
     return_background_rect = menu_item_background.get_rect(center=(SCREEN_WIDTH // 2, return_y_position + 100))  # Center vertically
+    return_background_rect.y += 2
     screen.blit(menu_item_background, return_background_rect)  # Draw the background for the Return option
 
     # Draw the "Return" button text
     font = pygame.font.Font(None, 50)  # Use default font
     return_color = selected_color if selected_index == number_of_slots else normal_color
-    return_text_surface = font.render("Return", True, return_color)  # Render the text
+    return_text_surface = textbox_font.render("Return", True, return_color)  # Render the text
     return_text_rect = return_text_surface.get_rect(center=(SCREEN_WIDTH // 2, return_y_position + 100))  # Center the text horizontally
     screen.blit(return_text_surface, return_text_rect)  # Draw the text
 
@@ -323,12 +333,16 @@ def render_new_game(screen, selected_index, running):
     fade_in(screen, 2, main_menu_image)
     play_music("audio/music/menu_theme.wav", loop=-1)
     fade_in_music(2)
-    
+
+    display_text = "Hello, welcome to the game!"
+    typing_done = False  # Flag to track if typing is complete
+    final_text = ""  # Store the fully displayed text
+
     while game_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False  # Set `running` to False to exit the game entirely
-                game_running = False  # Exit the options menu as well
+                running = False  # Exit the game entirely
+                game_running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     sounds['navigate'].play()
@@ -338,20 +352,28 @@ def render_new_game(screen, selected_index, running):
                     selected_index = (selected_index + 1) % len(option_menu_options)
                 elif event.key == pygame.K_ESCAPE:
                     sounds['back'].play()
-                    options_running = False
+                    game_running = False  # Exit the options menu
                 elif event.key == pygame.K_RETURN:
                     if selected_index == 0:  # BGM Volume
                         pass
                     elif selected_index == 1:  # SFX Volume
                         pass
                     elif selected_index == 2:  # Return to main menu
-                        options_running = False  # Exit the options menu
-        
-        screen.fill("black")
-        screen.blit(main_menu_image, (0, 0))
-        
-        pygame.display.flip()
-        
-    return running
+                        game_running = False
 
-    
+        # Clear the screen and render the background
+        screen.blit(main_menu_image, (0, 0))
+        screen.blit(text_box, (0, 0))
+
+        # Only call the typing function if it hasn't finished yet
+        if not typing_done:
+            final_text, typing_done = display_typing_text(screen, display_text, textbox_font)
+        else:
+            # Render the final text after typing is complete
+            text_surface = textbox_font.render(final_text, True, (255, 255, 255))
+            screen.blit(text_surface, (150, 800))  # Adjust the position as needed
+
+        # Update the display
+        pygame.display.flip()
+
+    return running

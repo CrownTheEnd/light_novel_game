@@ -4,6 +4,7 @@ SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 SCREEN_CENTER = (SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
 
+textbox_font = pygame.font.Font("font/DIN Bold.ttf", 25)
 main_menu_font_size = 55
 main_menu_font = pygame.font.Font(None, main_menu_font_size)
 vertical_spacing = 50  # Set a fixed spacing value || this is for menu item spacing
@@ -29,23 +30,18 @@ sounds = {
 for sound in sounds.values():
     sound.set_volume(sfx_volume)
 
-#sounds['jump'].play()
-
-
-
 base_y = SCREEN_HEIGHT // 1.4  # Start positioning from the middle of the screen || this is for menu item spacing
 
 main_menu_image = pygame.image.load("Images/main_menu_img.jpg")
 main_menu_image = pygame.transform.scale(main_menu_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 menu_item_background = pygame.image.load("Images/menu_item_background.png")
 splash_card = pygame.image.load("Images/splash_card.png")
+text_box = pygame.image.load("Images/text_box.png")
 
 load_item_background = pygame.image.load("Images/load_item_background.png")
 
 options_menu_image = pygame.image.load("Images/options_menu_img.jpg")
-
 main_menu_options = ['New Game', 'Load Game', 'Options', 'Exit']
-
 option_menu_options = ['Music', 'Sound Effects','Return']
 
 fade_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
