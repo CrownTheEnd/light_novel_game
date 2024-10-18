@@ -1,6 +1,19 @@
 import pygame
 import time
+import json
 from constants import *
+from json_loader import *
+from data.dictionaries import *
+
+def load_settings():
+    """Load game settings from settings.json."""
+    with open('jsons/settings.json', 'r') as json_file:
+        return json.load(json_file)
+    
+def save_settings(settings):
+    """Save game settings to settings.json."""
+    with open('jsons/settings.json', 'w') as json_file:
+        json.dump(settings, json_file, indent=4)  # Use indent for pretty printing
 
 def display_typing_text(screen, text, font, typing_speed=100):
     displayed_text = ""
@@ -30,9 +43,9 @@ def wait_for_input(key):
             return True  # Indicate that a key was pressed
     return None  # No input detected
 
-def play_music(song, loop=-1):
+def play_music(song, volume, loop=-1):
     pygame.mixer.music.load(song)
-    pygame.mixer.music.set_volume(slider_values[0])
+    pygame.mixer.music.set_volume(volume)
     pygame.mixer.music.play(loop)
 
 def render_main_menu(screen, selected_index):
@@ -157,6 +170,10 @@ def show_options(screen, selected_index, running):  # Pass `running` as an argum
                         # Handle SFX Volume adjustment
                         pass
                     elif selected_index == 2:  # Return to main menu
+                        settings_to_save = {
+                        'slider_values': slider_values
+                        }
+                        save_settings(settings_to_save)
                         options_running = False  # Exit the options menu
                 
         # Update slider values based on the selected index
@@ -328,13 +345,20 @@ def render_load_item_background(screen): #the background is a 900x200 black squa
         position = load_item_background.get_rect(center=(SCREEN_WIDTH // 2, start_y_position + i * (slot_height + vertical_spacing) + slot_height / 2))
         screen.blit(load_item_background, position)  # Draw the load item background
         
+def render_name(screen, current_character):
+    text_font = pygame.font.Font("font/DIN Bold.ttf", 35)
+    text = text_font.render(current_character, True, (255, 215, 0))
+    text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 200))  # Center the text
+    screen.blit(text, text_rect)  # Blit the text using its rect
+        
 def render_new_game(screen, selected_index, running):
     game_running = True
     fade_in(screen, 2, main_menu_image)
-    play_music("audio/music/menu_theme.wav", loop=-1)
+    play_music('audio/music/menu_theme.wav', slider_values[0] / 100, loop=-1)
     fade_in_music(2)
 
-    display_text = "Hello, welcome to the game!"
+    multiple_choice = False
+    display_text = last_diplayed_text
     typing_done = False  # Flag to track if typing is complete
     final_text = ""  # Store the fully displayed text
 
@@ -344,26 +368,35 @@ def render_new_game(screen, selected_index, running):
                 running = False  # Exit the game entirely
                 game_running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_UP and multiple_choice == True:
                     sounds['navigate'].play()
-                    selected_index = (selected_index - 1) % len(option_menu_options)
-                elif event.key == pygame.K_DOWN:
+                    pass
+                elif event.key == pygame.K_DOWN and multiple_choice == True:
                     sounds['navigate'].play()
-                    selected_index = (selected_index + 1) % len(option_menu_options)
+                    pass #this is for multiple choice options later
                 elif event.key == pygame.K_ESCAPE:
-                    sounds['back'].play()
-                    game_running = False  # Exit the options menu
-                elif event.key == pygame.K_RETURN:
+                    running = False  # Exit the game entirely
+                    game_running = False
+                elif event.key == pygame.K_RETURN and multiple_choice == True:
                     if selected_index == 0:  # BGM Volume
                         pass
                     elif selected_index == 1:  # SFX Volume
                         pass
                     elif selected_index == 2:  # Return to main menu
                         game_running = False
+                if event.key == pygame.K_RETURN:
+                    # Update dialogue
+                    current_character["dialogue_index"] += 1
+                    dialogue_index = current_character["dialogue_index"]
+                    
+                    if dialogue_index in current_character["dialogue"]:
+                        display_text = current_character["dialogue"][dialogue_index]
+                        last_displayed_text = display_text  # Store the last displayed text
 
         # Clear the screen and render the background
         screen.blit(main_menu_image, (0, 0))
         screen.blit(text_box, (0, 0))
+        render_name(screen, current_character)
 
         # Only call the typing function if it hasn't finished yet
         if not typing_done:

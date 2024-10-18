@@ -1,6 +1,7 @@
 import pygame
 pygame.init()
 import time
+import json
 
 from constants import *
 from functionality import *
@@ -9,7 +10,10 @@ def main():
     pygame.init()
     pygame.mixer.init()
 
-    play_music("audio/music/menu_theme.wav", loop=-1)
+    settings = load_settings()
+    slider_values = settings.get('slider_values', [50.0, 50.0])
+
+    play_music('audio/music/menu_theme.wav', slider_values[0] / 100, loop=-1)
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     
@@ -43,6 +47,7 @@ def main():
                         sounds['confirm'].play()
                         running = show_load(screen, selected_index, running)  # Call your function to load a game
                     elif selected_index == 2:  # Options
+                        print(slider_values)
                         selected_index = 0  # Reset index before showing options
                         sounds['confirm'].play()
                         running = show_options(screen, selected_index, running)  # Pass and update `running`

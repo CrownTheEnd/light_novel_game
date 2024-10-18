@@ -2,7 +2,7 @@ current_bgm = #the song that was playing
 current_background = #the background you were on
 current_dialogue =  #the dialogue number you were on
 current_character = #the character you were talking to when you saved
-multi_character_check = [] #something like kafka[22], silverwolf[1]
+multi_character_check = [] #something like (kafka, silverwolf)
 
 bgm_volume =
 sfx_volume =

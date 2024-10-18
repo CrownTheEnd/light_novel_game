@@ -1,4 +1,6 @@
 import pygame
+import json
+from json_loader import *
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
@@ -14,14 +16,6 @@ load_spacing = 50
 mouse_position = pygame.mouse.get_pos()
 mouse_press = pygame.mouse.get_pressed()
 
-slider_values = [50.0, 50.0]
-
-bgm_volume = slider_values[0] / 100
-sfx_volume = slider_values[1] / 100
-
-"""menu_navigation_sound = pygame.mixer.Sound("audio/sound_effects/menu_navigate.wav")
-menu_confirm_sound = pygame.mixer.Sound("audio/sound_effects/menu_back.wav")
-menu_back_sound = pygame.mixer.Sound("audio/sound_effects/menu_back.wav")"""
 sounds = {
     'navigate': pygame.mixer.Sound("audio/sound_effects/menu_navigate.wav"),
     'confirm': pygame.mixer.Sound("audio/sound_effects/menu_back.wav"),

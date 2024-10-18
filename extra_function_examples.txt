@@ -1,0 +1,14 @@
+current_character = characters["Acheron"]  # Example: currently talking to Acheron
+
+if event.key == pygame.K_RETURN:
+    # Increment dialogue index
+    current_character["dialogue_index"] += 1
+    
+    # Get the current dialogue based on the incremented index
+    dialogue_index = current_character["dialogue_index"]
+    
+    # Ensure there is a next dialogue
+    if dialogue_index in current_character["dialogue"]:
+        display_text = current_character["dialogue"][dialogue_index]
+    else:
+        display_text = "End of conversation."  # Handle when dialogues are finished
