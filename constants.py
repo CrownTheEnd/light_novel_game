@@ -22,7 +22,7 @@ sounds = {
     'back': pygame.mixer.Sound("audio/sound_effects/menu_back.wav")
 }
 for sound in sounds.values():
-    sound.set_volume(sfx_volume)
+    sound.set_volume(slider_values[1] / 100)
 
 base_y = SCREEN_HEIGHT // 1.4  # Start positioning from the middle of the screen || this is for menu item spacing
 

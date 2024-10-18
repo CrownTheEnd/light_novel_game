@@ -5,7 +5,8 @@ characters = {
             2: "Are you ready for the adventure?",
             3: "Let's begin!"
         },
-        "dialogue_index": 1  # Store current dialogue index for each character
+        "dialogue_index": 1,  # Store current dialogue index for each character
+        "image_file": "Images\characters\Acheron_Render.png"
     },
     "Nyx": {
         "dialogue": {

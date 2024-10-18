@@ -5,17 +5,17 @@ from constants import *
 from json_loader import *
 from data.dictionaries import *
 
-def load_settings():
-    """Load game settings from settings.json."""
-    with open('jsons/settings.json', 'r') as json_file:
-        return json.load(json_file)
-    
 def save_settings(settings):
     """Save game settings to settings.json."""
-    with open('jsons/settings.json', 'w') as json_file:
+    with open('data/jsons/settings.json', 'w') as json_file:
         json.dump(settings, json_file, indent=4)  # Use indent for pretty printing
 
-def display_typing_text(screen, text, font, typing_speed=100):
+def save_game_file():
+    """Save the current game state to save_file.json."""
+    with open('data/jsons/save_file.json', 'w') as json_file:
+        json.dump(game_state, json_file, indent=4)
+
+def display_typing_text(screen, text, font, typing_speed=50):
     displayed_text = ""
     index = 0
     last_time = pygame.time.get_ticks()
@@ -31,7 +31,7 @@ def display_typing_text(screen, text, font, typing_speed=100):
 
         # Render and display the text
         text_surface = font.render(displayed_text, True, (255, 255, 255))
-        screen.blit(text_surface, (150, 800))  # Adjust the position as needed
+        screen.blit(text_surface, (200, 800))  # Adjust the position as needed
         pygame.display.flip()
         pygame.time.delay(30)  # Add a small delay to control the loop speed
 
@@ -99,7 +99,7 @@ def fade_in_music(duration):
     
     # Gradually increase volume
     for i in range(0, 101, 1):  # Increase volume from 0 to 100
-        pygame.mixer.music.set_volume(i / 100)  # Set volume (0.0 to 1.0)
+        pygame.mixer.music.set_volume(slider_values[0] / 100)  # Set volume (0.0 to 1.0)
         time.sleep(duration / 100)  # Adjust sleep to control fade speed
     
 def fade_in(screen, duration, background_image):
@@ -113,17 +113,26 @@ def fade_in(screen, duration, background_image):
         pygame.display.update()
         time.sleep(duration / 51)  # Sleep to control fade speed
         
-def fade_in_png(screen, duration, png_image, position): #Fade in a PNG image over the given duration without altering the background.
-    # Create a surface from the PNG to fade in
-    fade_surface = png_image.copy()
-    # Fade in the PNG from fully transparent (alpha=0) to fully opaque (alpha=255)
-    for alpha in range(0, 256, 5):
-        fade_surface.set_alpha(alpha)  # Adjust the alpha level
+def fade_in_png(screen, duration, current_character, position):
+    """Fade in a PNG image over the given duration (in seconds)."""
+    # Load the image from the characters dictionary
+    image_file = characters[current_character]["image_file"]
+    image = pygame.image.load(image_file).convert_alpha()  # Load and convert the image as a surface
+    fade_surface = image.copy()  # Copy the surface to manipulate alpha
+
+    # Fade the PNG from fully transparent (alpha=0) to fully opaque (alpha=255)
+    for alpha in range(0, 256, 5):  # Increase alpha from 0 to 255
+        fade_surface.set_alpha(alpha)  # Set the transparency level
         
-        screen.blit(fade_surface, position)     # Blit the fading PNG at the desired position
+        screen.blit(fade_surface, position)  # Blit the fading PNG at the desired position
         
         pygame.display.update()
-        time.sleep(duration / 51)  # Control the speed of fading
+        time.sleep(duration / 51)  # Sleep to control fade speed
+
+    fade_surface.set_alpha(255)  # Ensure the final alpha is set to 255
+    screen.blit(fade_surface, position)  # Blit the fully opaque image
+    
+    return True
 
 def fade_out(screen, duration, background_image):
     """Fade the screen out over the given duration (in seconds) using the provided background image."""
@@ -357,10 +366,21 @@ def render_new_game(screen, selected_index, running):
     play_music('audio/music/menu_theme.wav', slider_values[0] / 100, loop=-1)
     fade_in_music(2)
 
+    current_background = None
+    current_bgm = None
+    current_character = None
+    
+    fade_surface = None
+    fade_in_done = False
+    
     multiple_choice = False
-    display_text = last_diplayed_text
+    display_text = game_state["last_saved_text"]
     typing_done = False  # Flag to track if typing is complete
     final_text = ""  # Store the fully displayed text
+
+    # Fade in the character image once
+    fade_in_png(screen, 1, game_state['current_character'], (250, 110))
+    fade_in_done = True  # Mark that the fade in is done
 
     while game_running:
         for event in pygame.event.get():
@@ -368,16 +388,16 @@ def render_new_game(screen, selected_index, running):
                 running = False  # Exit the game entirely
                 game_running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP and multiple_choice == True:
+                if event.key == pygame.K_UP and multiple_choice:
                     sounds['navigate'].play()
                     pass
-                elif event.key == pygame.K_DOWN and multiple_choice == True:
+                elif event.key == pygame.K_DOWN and multiple_choice:
                     sounds['navigate'].play()
-                    pass #this is for multiple choice options later
+                    pass  # This is for multiple choice options later
                 elif event.key == pygame.K_ESCAPE:
                     running = False  # Exit the game entirely
                     game_running = False
-                elif event.key == pygame.K_RETURN and multiple_choice == True:
+                elif event.key == pygame.K_RETURN and multiple_choice:
                     if selected_index == 0:  # BGM Volume
                         pass
                     elif selected_index == 1:  # SFX Volume
@@ -385,18 +405,26 @@ def render_new_game(screen, selected_index, running):
                     elif selected_index == 2:  # Return to main menu
                         game_running = False
                 if event.key == pygame.K_RETURN:
-                    # Update dialogue
-                    current_character["dialogue_index"] += 1
-                    dialogue_index = current_character["dialogue_index"]
+                    sounds['confirm'].play()
+                    characters[game_state["current_character"]]["dialogue_index"] += 1
+                    dialogue_index = characters[game_state["current_character"]]["dialogue_index"]
                     
-                    if dialogue_index in current_character["dialogue"]:
-                        display_text = current_character["dialogue"][dialogue_index]
+                    if dialogue_index in characters[game_state["current_character"]]["dialogue"]:
+                        display_text = characters[game_state["current_character"]]["dialogue"][dialogue_index]
                         last_displayed_text = display_text  # Store the last displayed text
+                        typing_done = False 
 
         # Clear the screen and render the background
         screen.blit(main_menu_image, (0, 0))
+
+        # Only call fade_in_png once
+        if fade_in_done:
+            # Blit the character image since fade in is done
+            fade_in_surface = pygame.image.load(characters[game_state['current_character']]["image_file"]).convert_alpha()
+            screen.blit(fade_in_surface, (250, 110))
+
         screen.blit(text_box, (0, 0))
-        render_name(screen, current_character)
+        render_name(screen, game_state["current_character"])
 
         # Only call the typing function if it hasn't finished yet
         if not typing_done:
@@ -404,9 +432,10 @@ def render_new_game(screen, selected_index, running):
         else:
             # Render the final text after typing is complete
             text_surface = textbox_font.render(final_text, True, (255, 255, 255))
-            screen.blit(text_surface, (150, 800))  # Adjust the position as needed
+            screen.blit(text_surface, (200, 800))  # Adjust the position as needed
 
         # Update the display
         pygame.display.flip()
 
     return running
+

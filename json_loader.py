@@ -1,6 +1,6 @@
 import json
 
-def load_settings(file_path='jsons/settings.json'):
+def load_settings(file_path='data/jsons/settings.json'):
     """Load game settings from the specified JSON file."""
     try:
         with open(file_path, 'r') as file:
@@ -11,7 +11,7 @@ def load_settings(file_path='jsons/settings.json'):
         create_default_settings(file_path)  # You can call a function to create default settings
         return load_settings(file_path)  # Retry loading settings after creating
 
-def create_default_settings(file_path='jsons/settings.json'):
+def create_default_settings(file_path='data/jsons/settings.json'):
     """Create default settings if the settings file does not exist."""
     default_settings = {
         "slider_values": [50.0, 50.0]  # Default volume levels
@@ -19,6 +19,26 @@ def create_default_settings(file_path='jsons/settings.json'):
     with open(file_path, 'w') as file:  # Use 'w' mode to create or overwrite
         json.dump(default_settings, file, indent=4)
         print("Default settings created.")
+        
+def load_save(file_path='data/jsons/save_file.json'):
+    """Load game save data from the specified JSON file."""
+    try:
+        with open(file_path, 'r') as file:
+            save_data = json.load(file)
+        return save_data
+    except FileNotFoundError:
+        return "No save file"
+
+save_file = load_save()
+
+game_state = {    
+    
+    "current_character": save_file.get('current_character', None),
+    "current_bgm": save_file.get('current_bgm', None),
+    "current_background": save_file.get('current_background', None),
+    "current_dialogue": save_file.get('current_dialogue', None),
+    "last_saved_text": save_file.get('last_saved_text', "Greeting, Trailblazer.")
+}
 
 # Load the settings from the JSON file
 settings = load_settings()  # This will use the default file path
