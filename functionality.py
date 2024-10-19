@@ -411,7 +411,7 @@ def render_new_game(screen, selected_index, running):
                     
                     if dialogue_index in characters[game_state["current_character"]]["dialogue"]:
                         display_text = characters[game_state["current_character"]]["dialogue"][dialogue_index]
-                        last_displayed_text = display_text  # Store the last displayed text
+                        game_state["last_saved_text"] = display_text  # Store the last displayed text
                         typing_done = False 
 
         # Clear the screen and render the background
@@ -428,7 +428,7 @@ def render_new_game(screen, selected_index, running):
 
         # Only call the typing function if it hasn't finished yet
         if not typing_done:
-            final_text, typing_done = display_typing_text(screen, display_text, textbox_font)
+            final_text, typing_done = display_typing_text(screen, characters[game_state["current_character"]]["dialogue_index"], textbox_font)
         else:
             # Render the final text after typing is complete
             text_surface = textbox_font.render(final_text, True, (255, 255, 255))
