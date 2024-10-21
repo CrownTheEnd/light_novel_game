@@ -18,7 +18,7 @@ characters = {
     }
 }
 
-Scenes = {
+scenes = { # just a reminder to make the multiple choice dictionary match the dialogue_index its under.
     1: {
         "dialogue": {
             1: [

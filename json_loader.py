@@ -1,4 +1,5 @@
 import json
+from main import selected_index
 
 def load_settings(file_path='data/jsons/settings.json'):
     """Load game settings from the specified JSON file."""
@@ -32,12 +33,9 @@ def load_save(file_path='data/jsons/save_file.json'):
 save_file = load_save()
 
 game_state = {    
-    
-    "current_character": save_file.get('current_character', None),
-    "current_bgm": save_file.get('current_bgm', None),
-    "current_background": save_file.get('current_background', None),
-    "current_dialogue": save_file.get('current_dialogue', None),
-    "last_saved_text": save_file.get('last_saved_text', "Greeting, Trailblazer.")
+    "slot_id": save_file.get(f'{selected_index}'),
+    "scene_id": save_file.get('scene', None),    
+    "dialogue_index": save_file.get('dialogue_index', None),
 }
 
 # Load the settings from the JSON file

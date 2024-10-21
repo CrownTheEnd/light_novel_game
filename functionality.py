@@ -10,11 +10,40 @@ def save_settings(settings):
     with open('data/jsons/settings.json', 'w') as json_file:
         json.dump(settings, json_file, indent=4)  # Use indent for pretty printing
 
-def save_game_file():
-    """Save the current game state to save_file.json."""
+def save_game_file(selected_index):
+    """Save the current game state to a specific slot in save_file.json."""
+    
+    # Map the selected index (0-2) to slot keys "1", "2", "3"
+    slot_key = str(selected_index + 1)
+    
+    # Load the existing save data
+    with open('data/jsons/save_file.json', 'r') as json_file:
+        save_data = json.load(json_file)
+    
+    # Update the save slot with the current game state
+    save_data[slot_key] = game_state
+    
+    # Save the updated data back to the file
     with open('data/jsons/save_file.json', 'w') as json_file:
-        json.dump(game_state, json_file, indent=4)
+        json.dump(save_data, json_file, indent=4)
 
+def load_game_file(selected_index):
+    """Load the game state from a specific slot in save_file.json."""
+    
+    # Map the selected index (0-2) to slot keys "1", "2", "3"
+    slot_key = str(selected_index + 1)
+    
+    # Load the existing save data
+    with open('data/jsons/save_file.json', 'r') as json_file:
+        save_data = json.load(json_file)
+    
+    # Retrieve the game state from the selected slot
+    if slot_key in save_data:
+        game_state = save_data[slot_key]
+        return game_state
+    else:
+        raise ValueError(f"No save data found for slot {slot_key}")
+        
 def display_typing_text(screen, text, font, typing_speed=50):
     displayed_text = ""
     index = 0
@@ -173,10 +202,8 @@ def show_options(screen, selected_index, running):  # Pass `running` as an argum
                     options_running = False
                 elif event.key == pygame.K_RETURN:
                     if selected_index == 0:  # BGM Volume
-                        # Handle BGM Volume adjustment
                         pass
                     elif selected_index == 1:  # SFX Volume
-                        # Handle SFX Volume adjustment
                         pass
                     elif selected_index == 2:  # Return to main menu
                         settings_to_save = {
@@ -276,13 +303,13 @@ def show_load(screen, selected_index, running):  # Pass `running` as an argument
                 elif event.key == pygame.K_RETURN:
                     if selected_index == 0:  # Load Game 1
                         # Handle loading the first game slot
-                        pass
+                        load_game_file(selected_index)
                     elif selected_index == 1:  # Load Game 2
                         # Handle loading the second game slot
-                        pass
+                        load_game_file(selected_index)
                     elif selected_index == 2:  # Load Game 3
                         # Handle loading the third game slot
-                        pass
+                        load_game_file(selected_index)
                     elif selected_index == 3:  # Return to main menu
                         sounds['back'].play()
                         load_running = False  # Exit the load menu
@@ -360,24 +387,31 @@ def render_name(screen, current_character):
     text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 200))  # Center the text
     screen.blit(text, text_rect)  # Blit the text using its rect
         
-def render_new_game(screen, selected_index, running):
+def render_new_game(screen, selected_index, running, scene=1, dialogue_index=1):
     game_running = True
-    fade_in(screen, 2, main_menu_image)
-    play_music('audio/music/menu_theme.wav', slider_values[0] / 100, loop=-1)
+    fade_in(screen, 2, scenes[scene]['background'])
+    play_music(scenes[scene]['bgm_file'], slider_values[0] / 100, loop=-1)
     fade_in_music(2)
 
-    current_background = None
-    current_bgm = None
-    current_character = None
-    
+    dialogue_number = dialogue_index
+    dialogue_entry = ""
+    dialogue_options = [
+        scenes[scene]['dialogue'][str(dialogue_number)][0][1],
+        scenes[scene]['dialogue'][str(dialogue_number)][1][1],
+        scenes[scene]['dialogue'][str(dialogue_number)][2][1]
+    ]
+        
     fade_surface = None
     fade_in_done = False
-    
     multiple_choice = False
-    display_text = game_state["last_saved_text"]
     typing_done = False  # Flag to track if typing is complete
     final_text = ""  # Store the fully displayed text
-
+    current_character = scenes[scene]['dialogue'][dialogue_number][0]
+    speaking_character = current_character
+    scene_actors = [current_character]
+    
+    multi_check = False
+    
     # Fade in the character image once
     fade_in_png(screen, 1, game_state['current_character'], (250, 110))
     fade_in_done = True  # Mark that the fade in is done
@@ -390,41 +424,40 @@ def render_new_game(screen, selected_index, running):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP and multiple_choice:
                     sounds['navigate'].play()
-                    pass
+                    selected_index = (selected_index - 1) % len(dialogue_options)
                 elif event.key == pygame.K_DOWN and multiple_choice:
                     sounds['navigate'].play()
-                    pass  # This is for multiple choice options later
+                    selected_index = (selected_index + 1) % len(dialogue_options)
                 elif event.key == pygame.K_ESCAPE:
                     running = False  # Exit the game entirely
                     game_running = False
+                
                 elif event.key == pygame.K_RETURN and multiple_choice:
-                    if selected_index == 0:  # BGM Volume
-                        pass
-                    elif selected_index == 1:  # SFX Volume
-                        pass
-                    elif selected_index == 2:  # Return to main menu
-                        game_running = False
+                    speaking_character = scenes[scene]['dialogue'][str(dialogue_number)][selected_index][3]
+                    dialogue_entry = scenes[scene]['dialogue'][str(dialogue_number)][selected_index][4]
+                
                 if event.key == pygame.K_RETURN:
                     sounds['confirm'].play()
-                    characters[game_state["current_character"]]["dialogue_index"] += 1
-                    dialogue_index = characters[game_state["current_character"]]["dialogue_index"]
+                    dialogue_number += 1
                     
-                    if dialogue_index in characters[game_state["current_character"]]["dialogue"]:
-                        display_text = characters[game_state["current_character"]]["dialogue"][dialogue_index]
-                        game_state["last_saved_text"] = display_text  # Store the last displayed text
-                        typing_done = False 
+                    if dialogue_number in scenes[scene]['dialogue']:
+                        typing_done = False
+                        if scenes[scene]['dialogue'][dialogue_number][0] not in scene_actors:
+                            scene_actors += scenes[scene]['dialogue'][dialogue_number][0]
+                        if dialogue_entry[-1] == "multi":
+                            multiple_choice = True
 
         # Clear the screen and render the background
-        screen.blit(main_menu_image, (0, 0))
+        screen.blit(scenes[scene]['background'], (0, 0))
 
         # Only call fade_in_png once
         if fade_in_done:
             # Blit the character image since fade in is done
-            fade_in_surface = pygame.image.load(characters[game_state['current_character']]["image_file"]).convert_alpha()
+            fade_in_surface = pygame.image.load(scenes['characters'][current_character]).convert_alpha()
             screen.blit(fade_in_surface, (250, 110))
 
         screen.blit(text_box, (0, 0))
-        render_name(screen, game_state["current_character"])
+        render_name(screen, speaking_character)
 
         # Only call the typing function if it hasn't finished yet
         if not typing_done:

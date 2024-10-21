@@ -13,6 +13,9 @@ vertical_spacing = 50  # Set a fixed spacing value || this is for menu item spac
 option_spacing = 120
 load_spacing = 50
 
+actor_one_position = ((250, 110))
+actor_two_position = ((1670, 110))
+
 mouse_position = pygame.mouse.get_pos()
 mouse_press = pygame.mouse.get_pressed()
 
