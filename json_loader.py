@@ -1,5 +1,5 @@
 import json
-from main import selected_index
+from globals import selected_index
 
 def load_settings(file_path='data/jsons/settings.json'):
     """Load game settings from the specified JSON file."""

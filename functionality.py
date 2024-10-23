@@ -4,6 +4,7 @@ import json
 from constants import *
 from json_loader import *
 from data.dictionaries import *
+from globals import *
 
 def save_settings(settings):
     """Save game settings to settings.json."""
@@ -145,7 +146,7 @@ def fade_in(screen, duration, background_image):
 def fade_in_png(screen, duration, current_character, position):
     """Fade in a PNG image over the given duration (in seconds)."""
     # Load the image from the characters dictionary
-    image_file = characters[current_character]["image_file"]
+    image_file = current_character
     image = pygame.image.load(image_file).convert_alpha()  # Load and convert the image as a surface
     fade_surface = image.copy()  # Copy the surface to manipulate alpha
 
@@ -174,12 +175,6 @@ def fade_out(screen, duration, background_image):
         
         pygame.display.update()
         time.sleep(duration / 51)
-    
-def start_new_game(): #starts the game
-    pass
-
-def load_game(): #loads the game
-    pass
 
 def show_options(screen, selected_index, running):  # Pass `running` as an argument
     options_running = True  # Local flag to keep the options menu running
@@ -389,7 +384,10 @@ def render_name(screen, current_character):
         
 def render_new_game(screen, selected_index, running, scene=1, dialogue_index=1):
     game_running = True
-    fade_in(screen, 2, scenes[scene]['background'])
+    background = pygame.image.load(scenes[scene]['background'])
+    background = pygame.transform.scale(background, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    
+    fade_in(screen, 2, background)
     play_music(scenes[scene]['bgm_file'], slider_values[0] / 100, loop=-1)
     fade_in_music(2)
 
@@ -400,7 +398,7 @@ def render_new_game(screen, selected_index, running, scene=1, dialogue_index=1):
         scenes[scene]['dialogue'][str(dialogue_number)][1][1],
         scenes[scene]['dialogue'][str(dialogue_number)][2][1]
     ]
-        
+    
     fade_surface = None
     fade_in_done = False
     multiple_choice = False
@@ -408,13 +406,14 @@ def render_new_game(screen, selected_index, running, scene=1, dialogue_index=1):
     final_text = ""  # Store the fully displayed text
     current_character = scenes[scene]['dialogue'][dialogue_number][0]
     speaking_character = current_character
-    scene_actors = [current_character]
-    
-    multi_check = False
-    
-    # Fade in the character image once
-    fade_in_png(screen, 1, game_state['current_character'], (250, 110))
-    fade_in_done = True  # Mark that the fade in is done
+    scene_actors = [current_character]  # Initialize with the current character
+
+    # Initialize a dictionary to track fade-in states for characters
+    fade_in_states = {current_character: False}
+
+    # Fade in the first character image once
+    fade_in_png(screen, 1, scenes[scene]['characters'][scenes[scene]["dialogue"][dialogue_number][0]], (250, 110))
+    fade_in_states[current_character] = True  # Mark that the first character has faded in
 
     while game_running:
         for event in pygame.event.get():
@@ -433,35 +432,46 @@ def render_new_game(screen, selected_index, running, scene=1, dialogue_index=1):
                     game_running = False
                 
                 elif event.key == pygame.K_RETURN and multiple_choice:
-                    speaking_character = scenes[scene]['dialogue'][str(dialogue_number)][selected_index][3]
-                    dialogue_entry = scenes[scene]['dialogue'][str(dialogue_number)][selected_index][4]
+                    speaking_character = scenes[scene]['dialogue'][str(dialogue_number)][selected_index][3]  # NPC responding 
+                    dialogue_entry = scenes[scene]['dialogue'][str(dialogue_number)][selected_index][4]  # Multi-response
                 
                 if event.key == pygame.K_RETURN:
                     sounds['confirm'].play()
                     dialogue_number += 1
-                    
+
                     if dialogue_number in scenes[scene]['dialogue']:
                         typing_done = False
-                        if scenes[scene]['dialogue'][dialogue_number][0] not in scene_actors:
-                            scene_actors += scenes[scene]['dialogue'][dialogue_number][0]
-                        if dialogue_entry[-1] == "multi":
-                            multiple_choice = True
+                        # Update current character and possibly the second character
+                        current_character = scenes[scene]['dialogue'][dialogue_number][0]
+                        if current_character not in scene_actors:
+                            scene_actors.append(current_character)
+                            fade_in_states[current_character] = False  # Reset fade-in state for new character
+
+                        if len(scenes[scene]['dialogue'][dialogue_number]) > 1:
+                            second_character = scenes[scene]['dialogue'][dialogue_number][1][0]
+                            if second_character not in scene_actors:
+                                scene_actors.append(second_character)
+                                fade_in_states[second_character] = False  # Reset fade-in state for the second character
 
         # Clear the screen and render the background
-        screen.blit(scenes[scene]['background'], (0, 0))
+        screen.blit(background, (0, 0))  # Use the loaded background
 
-        # Only call fade_in_png once
-        if fade_in_done:
-            # Blit the character image since fade in is done
-            fade_in_surface = pygame.image.load(scenes['characters'][current_character]).convert_alpha()
-            screen.blit(fade_in_surface, (250, 110))
+        # Handle fading in characters
+        for actor in scene_actors:
+            if not fade_in_states[actor]:  # Check if this character hasn't faded in yet
+                fade_in_png(screen, 1, scenes[scene]['characters'], (250, 110) if actor == current_character else (SCREEN_WIDTH - 250, 110))
+                fade_in_states[actor] = True  # Mark as faded in
+                # Load and blit the character image after fading
+                character_surface = pygame.image.load(scenes[scene]['characters'][actor]).convert_alpha()
+                position = (250, 110) if actor == current_character else (SCREEN_WIDTH - 250, 110)
+                screen.blit(character_surface, position)  # Adjust position based on the character
 
         screen.blit(text_box, (0, 0))
         render_name(screen, speaking_character)
 
         # Only call the typing function if it hasn't finished yet
         if not typing_done:
-            final_text, typing_done = display_typing_text(screen, characters[game_state["current_character"]]["dialogue_index"], textbox_font)
+            final_text, typing_done = display_typing_text(screen, scenes[scene]["dialogue"][dialogue_number], textbox_font)
         else:
             # Render the final text after typing is complete
             text_surface = textbox_font.render(final_text, True, (255, 255, 255))
@@ -471,4 +481,5 @@ def render_new_game(screen, selected_index, running, scene=1, dialogue_index=1):
         pygame.display.flip()
 
     return running
+
 

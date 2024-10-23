@@ -49,7 +49,7 @@ scenes = { # just a reminder to make the multiple choice dictionary match the di
             3: ["Acheron", "Let's begin!"]
         },
         "dialogue_index": 1,  # Store current dialogue index for each character
-        "background": "Images\menu_item_background.png",
+        "background": "Images/main_menu_img.jpg",
         "bgm_file": "audio\music\menu_theme.wav",
         "characters": {
             "Acheron": "Images\characters\Acheron_Render.png",

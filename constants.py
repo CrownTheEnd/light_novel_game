@@ -1,6 +1,7 @@
 import pygame
 import json
 from json_loader import *
+from globals import selected_index
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080

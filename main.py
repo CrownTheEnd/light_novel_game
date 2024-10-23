@@ -5,6 +5,7 @@ import json
 
 from constants import *
 from functionality import *
+from globals import selected_index
 
 def main():
     pygame.init()
@@ -18,7 +19,6 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     
     global selected_index
-    selected_index = 0  # Starting index for the main menu
 
     running = True
     while running:
